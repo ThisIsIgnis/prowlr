@@ -6,6 +6,7 @@ services:
       - "8989:80"
     volumes:
       - ./prowlr.html:/usr/share/nginx/html/index.html:ro
+      - ./config.json:/usr/share/nginx/html/config.json:ro
     restart: unless-stopped
     logging:
       driver: json-file

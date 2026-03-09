@@ -1,0 +1,15 @@
+{
+  "prowlarr": "http://localhost:9696",
+  "apikey": "your-api-key-here",
+  "categories": [
+    { "name": "Movies", "id": 2000 },
+    { "name": "TV",     "id": 5000 },
+    { "name": "Music",  "id": 1000 },
+    { "name": "PC",     "id": 4000 },
+    { "name": "Books",  "id": 8000 }
+  ],
+  "accent":  "#e8ff47",
+  "bg":      "#0a0a0a",
+  "surface": "#111111",
+  "text":    "#f0f0f0"
+}
