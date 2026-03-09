@@ -4,7 +4,7 @@
 
 > Designed for phones and Android TV. Works on desktop too.
 
-![Prowlr preview](screenshot.png)
+<img src="screenshot.png" alt="Prowlr preview" width="50%">
 
 ---
 
