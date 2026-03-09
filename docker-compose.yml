@@ -1,0 +1,14 @@
+services:
+  prowlr:
+    image: nginx:alpine
+    container_name: prowlr
+    ports:
+      - "8989:80"
+    volumes:
+      - ./prowlr.html:/usr/share/nginx/html/index.html:ro
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
