@@ -8,23 +8,16 @@
 
 ---
 
-## Why
-
-Prowlarr's built-in search is desktop-only and buried in the settings UI. Prowlr is a lightweight companion that puts search front and center, optimized for touch and small screens.
-
----
-
 ## Features
 
 - Search across all Prowlarr indexers simultaneously
-- Filter by category with customizable filter buttons
-- Sort results by date, size, seeders, or title
+- Customizable category filter buttons
+- Sort by date, size, seeders, or title
 - One-tap send to qBittorrent via Prowlarr's native grab endpoint
 - Confirmation dialog before sending
-- Per-result info link to the torrent page
-- First-run setup screen — no config file editing
-- Customizable colors (accent, background, surface, text)
-- Single HTML file — no build step, no dependencies
+- Per-result link to the torrent info page
+- Customizable colors
+- Two files total — `prowlr.html` + `config.json`
 
 ---
 
@@ -32,66 +25,65 @@ Prowlarr's built-in search is desktop-only and buried in the settings UI. Prowlr
 
 - [Prowlarr](https://github.com/Prowlarr/Prowlarr) with at least one indexer configured
 - qBittorrent set as a download client in Prowlarr
-- Docker (for the recommended deployment) or any web server
-
----
-
-## Deployment
-
-### Docker run
-
-```bash
-docker run -d \
-  --name prowlr \
-  -p 8989:80 \
-  -v /path/to/prowlr.html:/usr/share/nginx/html/index.html:ro \
-  --restart unless-stopped \
-  nginx:alpine
-```
-
-Open `http://localhost:8989`.
-
----
-
-### Docker Compose
-
-```bash
-git clone https://github.com/ThisIsIgnis/prowlr.git
-cd prowlr
-docker compose up -d
-```
-
-Open `http://localhost:8989`.
-
----
-
-### No Docker
-
-Open `prowlr.html` directly in a browser. Note: some browsers block cross-origin requests from `file://` URLs. Serving via a local web server avoids this.
-
-```bash
-python3 -m http.server 8989
-```
+- Docker (or any web server)
 
 ---
 
 ## Setup
 
-On first load, a setup screen appears automatically:
+### 1. Clone the repo
 
-1. Enter your **Prowlarr URL** — e.g. `http://localhost:9696`
-2. Enter your **Prowlarr API key** — found in Prowlarr under Settings → General → API Key
-3. Click **Save**
+```bash
+git clone https://github.com/ThisIsIgnis/prowlr.git
+cd prowlr
+```
 
-Settings are stored in `localStorage` and persist across sessions. Tap **⚙** at any time to change them.
+### 2. Edit config.json
+
+Open `config.json` and fill in your details:
+
+```json
+{
+  "prowlarr": "http://192.168.1.100:9696",
+  "apikey": "your-prowlarr-api-key",
+  "categories": [
+    { "name": "Movies", "id": 2000 },
+    { "name": "TV",     "id": 5000 },
+    { "name": "Music",  "id": 1000 },
+    { "name": "PC",     "id": 4000 },
+    { "name": "Books",  "id": 8000 }
+  ],
+  "accent":  "#e8ff47",
+  "bg":      "#0a0a0a",
+  "surface": "#111111",
+  "text":    "#f0f0f0"
+}
+```
+
+**Where to find your Prowlarr API key:** Prowlarr → Settings → General → API Key
+
+### 3. Start
+
+```bash
+docker compose up -d
+```
+
+Open `http://localhost:8989`. Done.
 
 ---
 
-## Settings
+## Configuration reference
+
+### Connection
+
+| Key | Description | Example |
+|---|---|---|
+| `prowlarr` | Base URL of your Prowlarr instance | `http://192.168.1.100:9696` |
+| `apikey` | Prowlarr API key | `abc123...` |
 
 ### Categories
 
-Add, remove, or rename the filter buttons shown on the search screen. Each entry needs a label and a Prowlarr category ID.
+Each entry needs a `name` (the button label) and an `id` (Prowlarr category ID).
 
 Common category IDs:
 
@@ -105,23 +97,39 @@ Common category IDs:
 | XXX | 6000 |
 | Other | 7000 |
 
-Full list: [Newznab/Torznab category standard](https://github.com/Prowlarr/Prowlarr/wiki/Supported-Indexers)
+Add, remove, or rename entries freely. Changes take effect after restarting the container (or hard-refreshing the browser if serving manually).
 
 ### Colors
 
-Customize accent, background, surface, and text colors. Changes preview live before saving.
+| Key | Description | Default |
+|---|---|---|
+| `accent` | Buttons, highlights, title | `#e8ff47` |
+| `bg` | Page background | `#0a0a0a` |
+| `surface` | Cards, inputs | `#111111` |
+| `text` | Primary text | `#f0f0f0` |
+
+---
+
+## Updating config
+
+Edit `config.json` on the server, then hard-refresh the browser (`Ctrl+Shift+R`). No container restart needed since the file is mounted read-only and served statically.
 
 ---
 
 ## How sending works
 
-Prowlr uses Prowlarr's `/api/v1/search` grab endpoint. When you tap **Send to qBit**, Prowlr sends the result's `guid` and `indexerId` to Prowlarr, which handles forwarding the torrent to qBittorrent. The browser never talks to qBittorrent directly — no credentials needed.
+When you tap **Send to qBit**, Prowlr calls Prowlarr's grab endpoint with the result's `guid` and `indexerId`. Prowlarr forwards the torrent to qBittorrent internally. The browser never talks to qBittorrent directly.
 
 ---
 
-## Updating
+## Updating Prowlr
 
-Replace `prowlr.html` with the latest version. Settings stored in `localStorage` are unaffected.
+```bash
+git pull
+docker compose up -d
+```
+
+`config.json` is not touched by updates.
 
 ---
 
