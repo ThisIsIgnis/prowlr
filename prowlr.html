@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Prowlr</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #222222;
+    --accent: #e8ff47;
+    --accent-dim: #b8cc2a;
+    --text: #f0f0f0;
+    --muted: #666;
+    --danger: #ff4747;
+    --green: #47ff8a;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { overflow-x: hidden; max-width: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  header {
+    padding: 20px 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+  header.scrolled { border-color: var(--border); }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .title {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+  }
+  .title span { color: var(--text); }
+
+  .btn-settings {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 8px 10px;
+    line-height: 1;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .btn-settings:hover { color: var(--text); border-color: #444; }
+
+  .search-wrap { display: flex; gap: 8px; margin-bottom: 14px; }
+
+  .search-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    padding: 14px 16px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--muted); }
+
+  .search-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #000;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    padding: 14px 20px;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .search-btn:active { transform: scale(0.97); background: var(--accent-dim); }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .filter-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 500;
+  }
+
+  .results-meta {
+    padding: 12px 16px 4px;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .results { padding: 8px 16px 0; display: flex; flex-direction: column; gap: 10px; }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: slideIn 0.2s ease both;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-main { padding: 14px 14px 10px; }
+  .card-title { font-size: 14px; line-height: 1.4; color: var(--text); margin-bottom: 10px; word-break: break-word; }
+  .card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+  .tag {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    padding: 3px 8px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .tag.size { color: var(--text); }
+  .tag.seeds { color: var(--green); border-color: #1a3d2a; background: #0d1f16; }
+  .tag.indexer { color: #a78bfa; border-color: #2d1f4a; background: #150d2a; }
+
+  .card-actions { display: flex; gap: 8px; }
+
+  .btn-dl {
+    flex: 1;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    padding: 12px;
+    text-align: center;
+    transition: background 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn-dl:active { transform: scale(0.98); background: var(--accent-dim); }
+  .btn-dl.sending { background: var(--border); color: var(--muted); pointer-events: none; }
+  .btn-dl.sent { background: #0d1f16; color: var(--green); border: 1px solid #1a3d2a; pointer-events: none; }
+  .btn-dl.error { background: #1f0d0d; color: var(--danger); border: 1px solid #3d1a1a; pointer-events: none; }
+
+  .btn-magnet {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 18px;
+    padding: 12px 14px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-magnet:active { border-color: var(--accent); color: var(--accent); }
+
+  .btn-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .btn-info:hover { color: var(--text); border-color: #444; }
+
+  .state-box { padding: 60px 16px; text-align: center; color: var(--muted); }
+  .state-box .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .state-box p { font-size: 14px; line-height: 1.6; }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .sort-bar {
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .sort-bar::-webkit-scrollbar { display: none; }
+
+  .sort-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .sort-btn.active { color: var(--accent); background: #1a1f05; }
+
+  /* Overlay base */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .overlay.active { display: flex; }
+
+  /* Shared panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .panel-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: var(--accent);
+  }
+  .panel-body {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .panel-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  .btn-primary {
+    flex: 1;
+    padding: 13px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:active { background: var(--accent-dim); }
+
+  .btn-secondary {
+    flex: 1;
+    padding: 13px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  /* Settings form */
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .field input::placeholder { color: #444; }
+  .field-hint { font-size: 11px; color: #444; margin-top: 4px; }
+
+  .setup-note {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  /* Color pickers */
+  .color-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .color-field label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .color-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .color-row input[type=color] {
+    width: 40px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    cursor: pointer;
+    padding: 2px;
+    flex-shrink: 0;
+  }
+  .color-hex {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .color-hex:focus { border-color: var(--accent); }
+  .settings-section {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #444;
+    margin: 20px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .btn-reset-colors {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 8px 12px;
+    width: 100%;
+    margin-top: 12px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .btn-reset-colors:hover { color: var(--text); border-color: #444; }
+  .panel { max-height: 90vh; overflow-y: auto; }
+
+  /* Category editor */
+  .cat-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .cat-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .cat-row input[type=text] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 9px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 0;
+  }
+  .cat-row input[type=text]:focus { border-color: var(--accent); }
+  .cat-name { flex: 1.2; }
+  .cat-id { flex: 0.8; }
+  .cat-del {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 7px 10px;
+    flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .cat-del:hover { color: var(--danger); border-color: var(--danger); }
+  .cat-header {
+    display: flex;
+    gap: 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #444;
+    margin-bottom: 4px;
+    padding: 0 2px;
+  }
+  .cat-header span:first-child { flex: 1.2; }
+  .cat-header span:nth-child(2) { flex: 0.8; }
+  .cat-header span:last-child { width: 36px; }
+  .btn-add-cat {
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 9px;
+    width: 100%;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .btn-add-cat:hover { color: var(--text); border-color: #444; }
+</style>
+</head>
+<body>
+
+<header id="header">
+  <div class="title-row">
+    <div class="title">prowl<span>r</span></div>
+    <button class="btn-settings" onclick="openSettings()" title="Settings">⚙</button>
+  </div>
+  <div class="search-wrap">
+    <input class="search-input" id="query" type="search" placeholder="Search torrents..." autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="search-btn" onclick="doSearch()">GO</button>
+  </div>
+  <div class="filters" id="filters"></div>
+</header>
+
+<div id="sort-bar" class="sort-bar" style="display:none">
+  <button class="sort-btn active" onclick="setSort(this,'date')">Latest</button>
+  <button class="sort-btn" onclick="setSort(this,'size')">Size</button>
+  <button class="sort-btn" onclick="setSort(this,'seeders')">Seeds</button>
+  <button class="sort-btn" onclick="setSort(this,'title')">Title</button>
+</div>
+
+<div id="results-meta" class="results-meta" style="display:none"></div>
+<div id="results" class="results"></div>
+
+<div id="state" class="state-box">
+  <div class="icon">🔍</div>
+  <p>Search across all<br>configured indexers</p>
+</div>
+
+<!-- Confirm modal -->
+<div class="overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="panel">
+    <div class="panel-title">Send to qBittorrent?</div>
+    <div class="panel-body" id="modal-torrent-title"></div>
+    <div class="panel-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" onclick="confirmSend()">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings panel -->
+<div class="overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="panel">
+    <div class="panel-title">Settings</div>
+    <div class="setup-note" id="setup-note" style="display:none">
+      No configuration found. Enter your Prowlarr details to get started.
+    </div>
+    <div class="field">
+      <label>Prowlarr URL</label>
+      <input type="url" id="cfg-prowlarr" placeholder="http://localhost:9696">
+    </div>
+    <div class="field">
+      <label>Prowlarr API Key</label>
+      <input type="text" id="cfg-apikey" placeholder="Your API key">
+      <div class="field-hint">Settings → General → API Key in Prowlarr</div>
+    </div>
+
+
+    <div class="settings-section">Categories</div>
+    <div class="cat-header"><span>Label</span><span>Category ID</span><span></span></div>
+    <div class="cat-list" id="cat-list"></div>
+    <button class="btn-add-cat" onclick="addCatRow()">+ Add category</button>
+    <div class="settings-section">Colors</div>
+    <div class="color-grid">
+      <div class="color-field">
+        <label>Accent</label>
+        <div class="color-row">
+          <input type="color" id="cfg-accent" value="#e8ff47">
+          <input type="text" class="color-hex" id="cfg-accent-hex" value="#e8ff47" maxlength="7">
+        </div>
+      </div>
+      <div class="color-field">
+        <label>Background</label>
+        <div class="color-row">
+          <input type="color" id="cfg-bg" value="#0a0a0a">
+          <input type="text" class="color-hex" id="cfg-bg-hex" value="#0a0a0a" maxlength="7">
+        </div>
+      </div>
+      <div class="color-field">
+        <label>Surface</label>
+        <div class="color-row">
+          <input type="color" id="cfg-surface" value="#111111">
+          <input type="text" class="color-hex" id="cfg-surface-hex" value="#111111" maxlength="7">
+        </div>
+      </div>
+      <div class="color-field">
+        <label>Text</label>
+        <div class="color-row">
+          <input type="color" id="cfg-text" value="#f0f0f0">
+          <input type="text" class="color-hex" id="cfg-text-hex" value="#f0f0f0" maxlength="7">
+        </div>
+      </div>
+    </div>
+    <button class="btn-reset-colors" onclick="resetColors()">Reset to defaults</button>
+    <div class="panel-actions">
+      <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+      <button class="btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let PROWLARR = '';
+let API_KEY = '';
+let currentCategory = 0;
+let currentSort = 'date';
+let allResults = [];
+let pendingGrab = null;
+
+const COLOR_DEFAULTS = {
+  accent: '#e8ff47',
+  bg: '#0a0a0a',
+  surface: '#111111',
+  text: '#f0f0f0'
+};
+
+const CAT_DEFAULTS = [
+  { name: 'Movies', id: 2000 },
+  { name: 'TV',     id: 5000 },
+  { name: 'Music',  id: 1000 },
+  { name: 'PC',     id: 4000 },
+  { name: 'Books',  id: 8000 }
+];
+
+function loadCategories() {
+  try {
+    const saved = localStorage.getItem('prowlr_categories');
+    return saved ? JSON.parse(saved) : CAT_DEFAULTS;
+  } catch { return CAT_DEFAULTS; }
+}
+
+function saveCategories() {
+  const rows = document.querySelectorAll('#cat-list .cat-row');
+  const cats = [];
+  rows.forEach(row => {
+    const name = row.querySelector('.cat-name').value.trim();
+    const id = parseInt(row.querySelector('.cat-id').value.trim());
+    if (name && !isNaN(id)) cats.push({ name, id });
+  });
+  localStorage.setItem('prowlr_categories', JSON.stringify(cats));
+  return cats;
+}
+
+function renderFilters() {
+  const cats = loadCategories();
+  const container = document.getElementById('filters');
+  container.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-btn active';
+  allBtn.textContent = 'All';
+  allBtn.onclick = () => setCategory(allBtn, 0);
+  container.appendChild(allBtn);
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.textContent = cat.name;
+    btn.onclick = () => setCategory(btn, cat.id);
+    container.appendChild(btn);
+  });
+}
+
+function populateCatEditor() {
+  const cats = loadCategories();
+  const list = document.getElementById('cat-list');
+  list.innerHTML = '';
+  cats.forEach(cat => addCatRow(cat.name, cat.id));
+}
+
+function addCatRow(name='', id='') {
+  const list = document.getElementById('cat-list');
+  const row = document.createElement('div');
+  row.className = 'cat-row';
+  row.innerHTML = `
+    <input type="text" class="cat-name" placeholder="Label" value="${escHtml(String(name))}">
+    <input type="text" class="cat-id" placeholder="ID e.g. 2000" value="${id}">
+    <button class="cat-del" onclick="this.closest('.cat-row').remove()" title="Remove">✕</button>
+  `;
+  list.appendChild(row);
+}
+
+function loadConfig() {
+  PROWLARR = localStorage.getItem('prowlr_prowlarr') || '';
+  API_KEY = localStorage.getItem('prowlr_apikey') || '';
+  applyColors();
+  return PROWLARR && API_KEY;
+}
+
+function applyColors() {
+  const root = document.documentElement;
+  const accent = localStorage.getItem('prowlr_accent') || COLOR_DEFAULTS.accent;
+  const bg = localStorage.getItem('prowlr_bg') || COLOR_DEFAULTS.bg;
+  const surface = localStorage.getItem('prowlr_surface') || COLOR_DEFAULTS.surface;
+  const text = localStorage.getItem('prowlr_text') || COLOR_DEFAULTS.text;
+  root.style.setProperty('--accent', accent);
+  root.style.setProperty('--accent-dim', dimColor(accent));
+  root.style.setProperty('--bg', bg);
+  root.style.setProperty('--surface', surface);
+  root.style.setProperty('--text', text);
+}
+
+function dimColor(hex) {
+  // Darken hex color by ~15%
+  const r = Math.max(0, parseInt(hex.slice(1,3),16) - 40);
+  const g = Math.max(0, parseInt(hex.slice(3,5),16) - 40);
+  const b = Math.max(0, parseInt(hex.slice(5,7),16) - 40);
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+function syncColorPicker(id) {
+  const picker = document.getElementById('cfg-' + id);
+  const hex = document.getElementById('cfg-' + id + '-hex');
+  picker.addEventListener('input', () => { hex.value = picker.value; applyColorsPreview(); });
+  hex.addEventListener('input', () => {
+    if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value; applyColorsPreview(); }
+  });
+}
+
+function applyColorsPreview() {
+  const root = document.documentElement;
+  const accent = document.getElementById('cfg-accent').value;
+  const bg = document.getElementById('cfg-bg').value;
+  const surface = document.getElementById('cfg-surface').value;
+  const text = document.getElementById('cfg-text').value;
+  root.style.setProperty('--accent', accent);
+  root.style.setProperty('--accent-dim', dimColor(accent));
+  root.style.setProperty('--bg', bg);
+  root.style.setProperty('--surface', surface);
+  root.style.setProperty('--text', text);
+}
+
+function resetColors() {
+  ['accent','bg','surface','text'].forEach(k => {
+    localStorage.removeItem('prowlr_' + k);
+    document.getElementById('cfg-' + k).value = COLOR_DEFAULTS[k];
+    document.getElementById('cfg-' + k + '-hex').value = COLOR_DEFAULTS[k];
+  });
+  applyColors();
+}
+
+function resetCategories() {
+  localStorage.removeItem('prowlr_categories');
+  populateCatEditor();
+}
+
+function saveSettings() {
+  const url = document.getElementById('cfg-prowlarr').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('cfg-apikey').value.trim();
+  if (!url || !key) return;
+  localStorage.setItem('prowlr_prowlarr', url);
+  localStorage.setItem('prowlr_apikey', key);
+  PROWLARR = url;
+  API_KEY = key;
+  ['accent','bg','surface','text'].forEach(k => {
+    localStorage.setItem('prowlr_' + k, document.getElementById('cfg-' + k).value);
+  });
+  saveCategories();
+  applyColors();
+  renderFilters();
+  closeSettings();
+  document.getElementById('state').innerHTML = '<div class="icon">🔍</div><p>Search across all<br>configured indexers</p>';
+}
+
+function openSettings() {
+  document.getElementById('cfg-prowlarr').value = PROWLARR;
+  document.getElementById('cfg-apikey').value = API_KEY;
+  document.getElementById('setup-note').style.display = 'none';
+  ['accent','bg','surface','text'].forEach(k => {
+    const val = localStorage.getItem('prowlr_' + k) || COLOR_DEFAULTS[k];
+    document.getElementById('cfg-' + k).value = val;
+    document.getElementById('cfg-' + k + '-hex').value = val;
+  });
+  populateCatEditor();
+  document.getElementById('settings-overlay').classList.add('active');
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('active');
+}
+
+function showSetup() {
+  document.getElementById('setup-note').style.display = 'block';
+  document.getElementById('cfg-prowlarr').value = '';
+  document.getElementById('cfg-apikey').value = '';
+  ['accent','bg','surface','text'].forEach(k => {
+    document.getElementById('cfg-' + k).value = COLOR_DEFAULTS[k];
+    document.getElementById('cfg-' + k + '-hex').value = COLOR_DEFAULTS[k];
+  });
+  populateCatEditor();
+  document.getElementById('settings-overlay').classList.add('active');
+  document.getElementById('state').innerHTML = '';
+}
+
+window.addEventListener('scroll', () => {
+  document.getElementById('header').classList.toggle('scrolled', window.scrollY > 4);
+});
+
+document.getElementById('query').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+function setCategory(btn, cat) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentCategory = cat;
+  if (allResults.length) renderResults(allResults);
+}
+
+function setSort(btn, key) {
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSort = key;
+  if (allResults.length) renderResults(allResults);
+}
+
+async function doSearch() {
+  if (!loadConfig()) { showSetup(); return; }
+  const q = document.getElementById('query').value.trim();
+  if (!q) return;
+
+  document.getElementById('state').innerHTML = '<div class="spinner"></div><p>Searching...</p>';
+  document.getElementById('state').style.display = 'block';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('results-meta').style.display = 'none';
+  document.getElementById('sort-bar').style.display = 'none';
+
+  try {
+    let url = `${PROWLARR}/api/v1/search?query=${encodeURIComponent(q)}&apikey=${API_KEY}&limit=100`;
+    if (currentCategory > 0) url += `&categories=${currentCategory}`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    allResults = data;
+    if (!data.length) {
+      document.getElementById('state').innerHTML = '<div class="icon">🕳️</div><p>No results found.<br>Try different terms.</p>';
+      return;
+    }
+
+    document.getElementById('state').style.display = 'none';
+    document.getElementById('sort-bar').style.display = 'flex';
+    renderResults(data);
+  } catch(e) {
+    document.getElementById('state').innerHTML = `<div class="icon">⚠️</div><p>Error: ${e.message}<br>Check Prowlarr is running.</p>`;
+  }
+}
+
+function renderResults(data) {
+  let filtered = currentCategory > 0
+    ? data.filter(r => r.categories && r.categories.some(c => Math.floor(c.id / 1000) === Math.floor(currentCategory / 1000)))
+    : data;
+
+  filtered = [...filtered].sort((a, b) => {
+    if (currentSort === 'date') return new Date(b.publishDate || 0) - new Date(a.publishDate || 0);
+    if (currentSort === 'size') return (b.size || 0) - (a.size || 0);
+    if (currentSort === 'seeders') return (b.seeders || 0) - (a.seeders || 0);
+    if (currentSort === 'title') return (a.title || '').localeCompare(b.title || '');
+    return 0;
+  });
+
+  const meta = document.getElementById('results-meta');
+  meta.textContent = `${filtered.length} results`;
+  meta.style.display = 'block';
+
+  const container = document.getElementById('results');
+  container.innerHTML = '';
+
+  filtered.forEach((r, i) => {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.style.animationDelay = `${Math.min(i * 20, 300)}ms`;
+
+    const size = r.size ? formatSize(r.size) : '?';
+    const seeds = r.seeders != null ? r.seeders : '?';
+    const indexer = r.indexer || '';
+    const hasMagnet = !!r.magnetUrl;
+    const cardId = `card-${i}`;
+
+    card.innerHTML = `
+      <div class="card-main">
+        <div class="card-title">${escHtml(r.title)}</div>
+        <div class="card-meta">
+          <span class="tag size">📦 ${size}</span>
+          <span class="tag seeds">▲ ${seeds}</span>
+          ${indexer ? `<span class="tag indexer">${escHtml(indexer)}</span>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="btn-dl" id="${cardId}" data-index="${i}">⬇ Send to qBit</button>
+          ${hasMagnet ? `<a class="btn-magnet" href="${escHtml(r.magnetUrl)}" title="Open magnet">🧲</a>` : ''}
+          ${r.infoUrl ? `<a class="btn-info" href="${escHtml(r.infoUrl)}" target="_blank" rel="noopener">↗ Info</a>` : ''}
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+    card.querySelector('.btn-dl').addEventListener('click', function() {
+      const result = filtered[parseInt(this.dataset.index)];
+      sendToQbit(this.id, result.guid || '', result.indexerId || 0, result.title || result.guid || '');
+    });
+  });
+}
+
+function sendToQbit(cardId, guid, indexerId, title) {
+  pendingGrab = { cardId, guid, indexerId };
+  document.getElementById('modal-torrent-title').textContent = title || guid;
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+  pendingGrab = null;
+}
+
+async function confirmSend() {
+  if (!pendingGrab) return;
+  const { cardId, guid, indexerId } = pendingGrab;
+  closeModal();
+
+  const btn = document.getElementById(cardId);
+  btn.className = 'btn-dl sending';
+  btn.textContent = '...';
+
+  try {
+    const res = await fetch(`${PROWLARR}/api/v1/search?apikey=${API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guid, indexerId })
+    });
+
+    if (res.ok) {
+      btn.className = 'btn-dl sent';
+      btn.textContent = '✓ Added';
+    } else {
+      const text = await res.text();
+      throw new Error(`Prowlarr ${res.status}: ${text}`);
+    }
+  } catch(e) {
+    btn.className = 'btn-dl error';
+    btn.textContent = '✗ Failed';
+    console.error(e);
+  }
+}
+
+function formatSize(bytes) {
+  if (!bytes) return '?';
+  const gb = bytes / 1073741824;
+  if (gb >= 1) return gb.toFixed(2) + ' GB';
+  const mb = bytes / 1048576;
+  if (mb >= 1) return mb.toFixed(0) + ' MB';
+  return Math.round(bytes / 1024) + ' KB';
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Init
+['accent','bg','surface','text'].forEach(syncColorPicker);
+renderFilters();
+if (!loadConfig()) {
+  showSetup();
+}
+</script>
+</body>
+</html>
