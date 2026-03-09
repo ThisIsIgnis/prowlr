@@ -116,6 +116,16 @@ Edit `config.json` on the server, then hard-refresh the browser (`Ctrl+Shift+R`)
 
 ---
 
+
+## Homarr integration
+
+Prowlr works great as an iFrame widget in [Homarr](https://github.com/ajnart/homarr). Add it to your dashboard for quick access alongside your other services.
+
+1. Edit your Homarr dashboard
+2. Add a new **iFrame** widget
+3. Set the URL to your Prowlr instance — e.g. `http://localhost:8989`
+4. Resize to taste
+
 ## How sending works
 
 When you tap **Send to qBit**, Prowlr calls Prowlarr's grab endpoint with the result's `guid` and `indexerId`. Prowlarr forwards the torrent to qBittorrent internally. The browser never talks to qBittorrent directly.
